@@ -5,13 +5,15 @@ package nutty
 import (
   "log"
   "fmt"
+  "os"
   "os/exec"
   "strings"
   "net/http"
   configfile "github.com/crowdmob/goconfig"
   "github.com/crowdmob/goamz/aws"
+  "github.com/crowdmob/goamz/exp/sns"
+  "github.com/crowdmob/kafka"
   // "github.com/crowdmob/goamz/dynamodb"
-  // "github.com/crowdmob/kafka"
 )
 
 type ControllerWithIndex interface {
@@ -33,6 +35,7 @@ type App struct {
   Name            string
   Env             string
   Port            int64
+  Logfile         string
   SnsArn          string
   AwsRegion       aws.Region
   AwsAuth         aws.Auth
@@ -50,6 +53,36 @@ type App struct {
 // func (routes *Router) Resources(resourceName *string, controller interface{}) {
 //   
 // }
+
+// Writes to Kafka on the sent topic if on production.  Otherwise, outputs with log.Println
+func (nuttyApp *App) KafkaPublish(topicName *string, message *string, completedNotice *chan bool) {
+  go func() {
+    if nuttyApp.Env != "production" {
+      log.Println(*message)
+    } else {
+      broker := kafka.NewBrokerPublisher(nuttyApp.KafkaHostname, *topicName, int(nuttyApp.KafkaPartition))
+      _, err := broker.Publish(kafka.NewMessage([]byte(*message)))
+      if err != nil {
+        nuttyApp.SNSPublish("ERROR Writing To Kafka", fmt.Sprintf("An error occurred when writing to kafka: %#v", err))
+      }
+    }
+  
+    if completedNotice != nil {
+      *completedNotice <- true
+    }
+  }()
+}
+
+// Writes to SNS on the topic specified in nuttyApp.SnsArn if on production.  Otherwise, outputs with log.Println
+func (nuttyApp *App) SNSPublish(subject string, message string) {
+  go func() {
+  	_, snsErr := sns.New(nuttyApp.AwsAuth, nuttyApp.AwsRegion).Publish(&sns.PublishOpt{message, "", fmt.Sprintf("[%s] %s", nuttyApp.Name), nuttyApp.SnsArn})
+    if snsErr != nil {
+      log.Println(fmt.Sprintf("SNS error: %#v during report of error writing to kafka: %s", snsErr, message))
+    }
+  }()
+}
+
 
 func (routes *Router) Map(uri string, controller interface{}, httpMethods []string, nuttyApp *App) {
   if !routes.initializations[uri] {
@@ -102,6 +135,8 @@ func New(configFileName *string) *App {
   returnedApp.Env, err = config.GetString("default", "env")
   if err != nil { log.Fatalf("Error reading Nuts config: [default].env %#v\n", err) }
   if len(returnedApp.Env) == 0 { returnedApp.Env = "development" }
+  returnedApp.Logfile, err = config.GetString("default", "logfile")
+  if err != nil { log.Fatalf("Error reading Nuts config: [default].logfile %#v\n", err) }
   returnedApp.Port, err = config.GetInt64("default", "port")
   if err != nil { log.Fatalf("Error reading Nuts config: [default].port %#v\n", err) }
   
@@ -135,6 +170,15 @@ func New(configFileName *string) *App {
   returnedApp.Routes.initializations = make(map[string]bool)
 
   returnedApp.Globals = make(map[string]interface{})
+
+  if returnedApp.Logfile != "stdout" {
+    f, err := os.Open(returnedApp.Logfile)
+    if err != nil {
+      log.Fatalf("Couldn't open logfile %s because: %#v\n", returnedApp.Logfile, err)
+    } else {
+      log.SetOutput(f)
+    }
+  }
 
   return returnedApp
 }

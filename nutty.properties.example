@@ -2,6 +2,7 @@
 appname=mynuttyapp
 port=$(PORT)s
 env=$(NUTTY_ENV)s
+logfile=stdout
 
 [aws]
 region=us-east-1

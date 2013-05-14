@@ -33,14 +33,14 @@ func main() {
   flag.Parse()
   log.Printf("Loading config file %s", ConfigFilename)
   
-	nuttyApp := nutty.New(&ConfigFilename)
+  nuttyApp := nutty.New(&ConfigFilename)
   routes.Init(nuttyApp)
   nuttyApp.Globals["my_globals"] = someGlobalVariableYouWantInAllControllers
 
   log.Printf("HTTP server listening on %d...\n", nuttyApp.Port)
   err = http.ListenAndServe(fmt.Sprintf(":%d",nuttyApp.Port), nil)
-	if err != nil {
-		log.Fatal("ListenAndServe: ", err)
-	}
+  if err != nil {
+    log.Fatal("ListenAndServe: ", err)
+  }
 }
 ```
