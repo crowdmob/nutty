@@ -1,0 +1,17 @@
+[default]
+appname=mynuttyapp
+port=$(PORT)s
+env=$(NUTTY_ENV)s
+
+[aws]
+region=us-east-1
+accesskey=$(AWS_ACCESS_KEY_ID)s
+secretkey=$(AWS_SECRET_ACCESS_KEY)s
+
+[sns]
+arn=arn:aws:sns:us-east-1:XXXXXXXXX:XXXXXXXXX
+
+[kafka]
+host=127.0.0.1
+port=9092
+partition=$(KAFKA_PARTITION)s
