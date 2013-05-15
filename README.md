@@ -15,10 +15,9 @@ import (
   "flag"
   "fmt"
   "log"
-	"net/http"
+  "net/http"
   "os"
 
-  "./models"
   "github.com/crowdmob/nutty"
   "./routes"
 )
@@ -35,7 +34,7 @@ func main() {
   
   nuttyApp := nutty.New(&ConfigFilename)
   routes.Init(nuttyApp)
-  nuttyApp.Globals["my_globals"] = someGlobalVariableYouWantInAllControllers
+  nuttyApp.Globals["my_global"] = someGlobalVariableYouWantInAllControllers
 
   log.Printf("HTTP server listening on %d...\n", nuttyApp.Port)
   err = http.ListenAndServe(fmt.Sprintf(":%d",nuttyApp.Port), nil)
