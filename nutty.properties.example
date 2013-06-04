@@ -4,6 +4,11 @@ port=$(PORT)s
 env=$(NUTTY_ENV)s
 logfile=stdout
 
+[paypal]
+username=$(PAYPAL_TEST_USERNAME)s
+password=$(PAYPAL_TEST_PASSWORD)s
+signature=$(PAYPAL_TEST_SIGNATURE)s
+
 [aws]
 region=us-east-1
 accesskey=$(AWS_ACCESS_KEY_ID)s

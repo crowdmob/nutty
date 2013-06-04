@@ -37,6 +37,9 @@ type App struct {
   Port            int64
   Logfile         string
   SnsArn          string
+  PaypalUsername  string
+  PaypalPassword  string
+  PaypalSignature string
   AwsRegion       aws.Region
   AwsAuth         aws.Auth
   KafkaHost       string
@@ -139,6 +142,14 @@ func New(configFileName *string) *App {
   if err != nil { log.Fatalf("Error reading Nuts config: [default].logfile %#v\n", err) }
   returnedApp.Port, err = config.GetInt64("default", "port")
   if err != nil { log.Fatalf("Error reading Nuts config: [default].port %#v\n", err) }
+  
+  // Paypal
+  returnedApp.PaypalUsername, err = config.GetString("paypal", "username")
+  if err != nil { log.Fatalf("Error reading Nuts config: [paypal].username %#v\n", err) }
+  returnedApp.PaypalPassword, err = config.GetString("paypal", "password")
+  if err != nil { log.Fatalf("Error reading Nuts config: [paypal].password %#v\n", err) }
+  returnedApp.PaypalSignature, err = config.GetString("paypal", "signature")
+  if err != nil { log.Fatalf("Error reading Nuts config: [paypal].signature %#v\n", err) }
   
   // AWS
   awsRegion, err := config.GetString("aws", "region")
