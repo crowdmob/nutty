@@ -24,7 +24,13 @@ type ControllerWithCreate interface {
   Create(*App, http.ResponseWriter, *http.Request)
 }
 
+type ControllerWithDestroy interface {
+  Destroy(*App, http.ResponseWriter, *http.Request)
+}
 
+type ControllerWithUpdate interface {
+  Update(*App, http.ResponseWriter, *http.Request)
+}
 type Router struct {
   handlers          map[string](map[string]interface{})
   initializations   map[string]bool
@@ -50,12 +56,6 @@ type App struct {
 
   Globals         map[string]interface{}
 }
-
-
-// TODO implement resources controller that should be GET/POST/PUT/DELETE
-// func (routes *Router) Resources(resourceName *string, controller interface{}) {
-//   
-// }
 
 // Writes to Kafka on the sent topic if on production.  Otherwise, outputs with log.Println
 func (nuttyApp *App) KafkaPublish(topicName *string, message *string, completedNotice *chan bool) {
@@ -96,7 +96,13 @@ func (routes *Router) Map(uri string, controller interface{}, httpMethods []stri
         http.NotFound(resp, req)
       } else {
         if req.Method == "POST" {
-          (routes.handlers[uri][req.Method]).(ControllerWithCreate).Create(nuttyApp, resp, req)
+          if req.FormValue("_method") == "delete" || req.FormValue("_method") == "DELETE" {
+            (routes.handlers[uri][req.Method]).(ControllerWithDestroy).Destroy(nuttyApp, resp, req)
+          } else if req.FormValue("_method") == "put" || req.FormValue("_method") == "PUT" {
+            (routes.handlers[uri][req.Method]).(ControllerWithUpdate).Update(nuttyApp, resp, req)
+          } else {
+            (routes.handlers[uri][req.Method]).(ControllerWithCreate).Create(nuttyApp, resp, req)
+          }
         } else {
           (routes.handlers[uri][req.Method]).(ControllerWithIndex).Index(nuttyApp, resp, req)
         }

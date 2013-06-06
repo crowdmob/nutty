@@ -1,7 +1,7 @@
 nutty
 =====
 
-An opinionated web framework in go (golang) that is built to work with Kafka, DynamoDB, and SNS.
+An opinionated web framework in go (golang) that is built to work with Kafka, DynamoDB, PayPal, and SNS.
 
 
 Example `server.go`
@@ -43,3 +43,11 @@ func main() {
   }
 }
 ```
+
+
+Testing
+=======
+
+Please run `go test nutty_test.go` to run the limited test suite.  Once the codebase is more stable, we'll flesh it out.
+
+
