@@ -52,8 +52,9 @@ func (nuttyApp *App) UpdateInDynamoDB(m PersistentModelWithDictionaryKey) error 
   marshalledAttrs, err := dynamodb.MarshalAttributes(m)
   if err != nil { return err }
   
+  // TODO once dynamodb has a proper UpdateItem we should use that instead of PutItem
   _, hashKeyValue := m.DictionaryKey()
-  _, err = nuttyApp.DynamoDBTableForModel(m).AddItem(
+  _, err = nuttyApp.DynamoDBTableForModel(m).PutItem(
     hashKeyValue, 
     "", 
     marshalledAttrs,
