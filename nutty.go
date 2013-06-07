@@ -3,38 +3,12 @@
 package nutty
 
 import (
+  "os"
   "log"
   "fmt"
-  "os"
-  "os/exec"
-  "strings"
-  "net/http"
   configfile "github.com/crowdmob/goconfig"
   "github.com/crowdmob/goamz/aws"
-  "github.com/crowdmob/goamz/exp/sns"
-  "github.com/crowdmob/kafka"
-  // "github.com/crowdmob/goamz/dynamodb"
 )
-
-type ControllerWithIndex interface {
-  Index(*App, http.ResponseWriter, *http.Request)
-}
-
-type ControllerWithCreate interface {
-  Create(*App, http.ResponseWriter, *http.Request)
-}
-
-type ControllerWithDestroy interface {
-  Destroy(*App, http.ResponseWriter, *http.Request)
-}
-
-type ControllerWithUpdate interface {
-  Update(*App, http.ResponseWriter, *http.Request)
-}
-type Router struct {
-  handlers          map[string](map[string]interface{})
-  initializations   map[string]bool
-}
 
 type App struct {
   configFileName  string
@@ -57,77 +31,6 @@ type App struct {
   Globals         map[string]interface{}
 }
 
-// Writes to Kafka on the sent topic if on production.  Otherwise, outputs with log.Println
-func (nuttyApp *App) KafkaPublish(topicName *string, message *string, completedNotice *chan bool) {
-  go func() {
-    if nuttyApp.Env != "production" {
-      log.Println(*message)
-    } else {
-      broker := kafka.NewBrokerPublisher(nuttyApp.KafkaHostname, *topicName, int(nuttyApp.KafkaPartition))
-      _, err := broker.Publish(kafka.NewMessage([]byte(*message)))
-      if err != nil {
-        nuttyApp.SNSPublish("ERROR Writing To Kafka", fmt.Sprintf("An error occurred when writing to kafka: %#v", err))
-      }
-    }
-  
-    if completedNotice != nil {
-      *completedNotice <- true
-    }
-  }()
-}
-
-// Writes to SNS on the topic specified in nuttyApp.SnsArn if on production.  Otherwise, outputs with log.Println
-func (nuttyApp *App) SNSPublish(subject string, message string) {
-  go func() {
-  	_, snsErr := sns.New(nuttyApp.AwsAuth, nuttyApp.AwsRegion).Publish(&sns.PublishOpt{message, "", fmt.Sprintf("[%s] %s", nuttyApp.Name), nuttyApp.SnsArn})
-    if snsErr != nil {
-      log.Println(fmt.Sprintf("SNS error: %#v during report of error writing to kafka: %s", snsErr, message))
-    }
-  }()
-}
-
-
-func (routes *Router) Map(uri string, controller interface{}, httpMethods []string, nuttyApp *App) {
-  if !routes.initializations[uri] {
-    routes.initializations[uri] = true
-    routes.handlers[uri] = make(map[string]interface{})
-    http.HandleFunc(uri, func(resp http.ResponseWriter, req *http.Request) {
-      if routes.handlers[uri][req.Method] == nil {
-        http.NotFound(resp, req)
-      } else {
-        if req.Method == "POST" {
-          if req.FormValue("_method") == "delete" || req.FormValue("_method") == "DELETE" {
-            (routes.handlers[uri][req.Method]).(ControllerWithDestroy).Destroy(nuttyApp, resp, req)
-          } else if req.FormValue("_method") == "put" || req.FormValue("_method") == "PUT" {
-            (routes.handlers[uri][req.Method]).(ControllerWithUpdate).Update(nuttyApp, resp, req)
-          } else {
-            (routes.handlers[uri][req.Method]).(ControllerWithCreate).Create(nuttyApp, resp, req)
-          }
-        } else {
-          (routes.handlers[uri][req.Method]).(ControllerWithIndex).Index(nuttyApp, resp, req)
-        }
-      }
-    })
-  }
-  
-  for _, method := range httpMethods {
-    routes.handlers[uri][strings.ToUpper(method)] = controller
-  }
-}
-
-// Defaults to GET if no http methods sent
-func (routes *Router) Root(ctrl ControllerWithIndex, nuttyApp *App) {
-  if !routes.initializations["/"] {
-    routes.initializations["/"] = true
-    routes.handlers["/"] = make(map[string]interface{})
-  }
-  
-  handler := func(w http.ResponseWriter, r *http.Request) { ctrl.Index(nuttyApp,w,r) }
-  routes.handlers["/"]["GET"] = handler
-  http.HandleFunc("/", handler)
-  http.HandleFunc("/index", handler)
-  http.HandleFunc("/index.html", handler)
-}
 
 func New(configFileName *string) *App {
   returnedApp := &App{}
@@ -198,12 +101,4 @@ func New(configFileName *string) *App {
   }
 
   return returnedApp
-}
-
-func GenerateUUID() (string, error) {
-  b, err := exec.Command("uuidgen").Output()
-  if err != nil {
-    return string(b), err
-  }
-  return strings.TrimSpace(string(b)), nil
 }

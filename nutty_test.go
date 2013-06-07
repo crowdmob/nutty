@@ -14,7 +14,7 @@ func (TesterControllerDefinition) Create(nuttyApp *nutty.App, w http.ResponseWri
 func (TesterControllerDefinition) Update(nuttyApp *nutty.App, w http.ResponseWriter, r *http.Request) {}
 func (TesterControllerDefinition) Destroy(nuttyApp *nutty.App, w http.ResponseWriter, r *http.Request) {}
   
-func TestInitRoutes(t *testing.T) {
+func TestRouterInit(t *testing.T) {
   configFilename := "nutty.properties.example"
 	nuttyApp := nutty.New(&configFilename)
   
@@ -29,5 +29,23 @@ func TestInitRoutes(t *testing.T) {
 
   // Test Combination Routes
   nuttyApp.Routes.Map("/teams.json",  TesterController, []string{"GET", "POST", "PUT", "DELETE"}, nuttyApp)
+}
+  
+func TestNotifier(t *testing.T) {
+  configFilename := "nutty.properties.example"
+	nuttyApp := nutty.New(&configFilename)
+  nuttyApp.SNSPublish("Test Subject", "Test Message")
+}
+  
+func TestStructuredLogger(t *testing.T) {
+  configFilename := "nutty.properties.example"
+	nuttyApp := nutty.New(&configFilename)
+  
+  topic := "test-topic"
+  msg := "test-message|test-message-2|test-message-3"
+  completedNotice := make(chan bool, 1)
+  
+  nuttyApp.KafkaPublish(&topic, &msg, &completedNotice)
+  <-completedNotice
 }
 
