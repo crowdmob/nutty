@@ -26,6 +26,22 @@ type Router struct {
   initializations   map[string]bool
 }
 
+// Required to use r.MultipartReader()
+func (routes *Router) RawPost(uri string, controller interface{}, nuttyApp *App) {
+  if !routes.initializations[uri] {
+    routes.initializations[uri] = true
+    routes.handlers[uri] = make(map[string]interface{})
+    http.HandleFunc(uri, func(resp http.ResponseWriter, req *http.Request) {
+      if routes.handlers[uri][req.Method] == nil {
+        http.NotFound(resp, req)
+      } else {
+        (routes.handlers[uri][req.Method]).(ControllerWithCreate).Create(nuttyApp, resp, req)
+      }
+    })
+  }
+
+  routes.handlers[uri]["POST"] = controller
+}
 
 func (routes *Router) Map(uri string, controller interface{}, httpMethods []string, nuttyApp *App) {
   if !routes.initializations[uri] {
