@@ -35,6 +35,16 @@ func (nuttyApp *App) GetFromDynamoDB(key string, dest PersistentModelWithDiction
   return err
 }
 
+func (nuttyApp *App) ExistsInDynamoDB(key string, m PersistentModelWithDictionaryKey) (bool, error) {
+  attrs, err := nuttyApp.DynamoDBTableForModel(m).GetItem(key, "")
+  if err != nil { return false, err }
+  
+  hashKeyName, _ := m.DictionaryKey()
+  if attrs[hashKeyName] != nil {
+    return true, nil
+  } 
+  return false, nil
+}
 
 func (nuttyApp *App) UpdateInDynamoDB(m PersistentModelWithDictionaryKey) error {
   m.SetUpdatedAt(time.Now())
