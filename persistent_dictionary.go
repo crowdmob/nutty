@@ -19,12 +19,12 @@ func (nuttyApp *App) AddToDynamoDB(m PersistentModelWithDictionaryKey) error {
   if err != nil { return err }
   
   _, hashKeyValue := m.DictionaryKey()
-  nuttyApp.DynamoDBTableForModel(m).PutItem(
+  _, err = nuttyApp.DynamoDBTableForModel(m).PutItem(
     hashKeyValue, 
     "", 
     marshalledAttrs,
   )
-  return nil
+  return err
 }
 
 func (nuttyApp *App) GetFromDynamoDB(key string, dest PersistentModelWithDictionaryKey) error {
@@ -48,7 +48,17 @@ func (nuttyApp *App) ExistsInDynamoDB(key string, m PersistentModelWithDictionar
 
 func (nuttyApp *App) UpdateInDynamoDB(m PersistentModelWithDictionaryKey) error {
   m.SetUpdatedAt(time.Now())
-  panic("UpdateInDynamoDB Not Yet Implemented")
+  
+  marshalledAttrs, err := dynamodb.MarshalAttributes(m)
+  if err != nil { return err }
+  
+  _, hashKeyValue := m.DictionaryKey()
+  _, err = nuttyApp.DynamoDBTableForModel(m).AddItem(
+    hashKeyValue, 
+    "", 
+    marshalledAttrs,
+  )
+  return err
 }
 
 func (nuttyApp *App) RemoveFromDynamoDB(m PersistentModelWithDictionaryKey) error {
