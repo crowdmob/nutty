@@ -2,8 +2,8 @@
 appname=mynuttyapp
 port=$(PORT)s
 env=$(NUTTY_ENV)s
-logfile=stdout
 servepath=.
+logfile=stdout
 
 [paypal]
 username=$(PAYPAL_TEST_USERNAME)s

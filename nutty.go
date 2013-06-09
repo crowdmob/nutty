@@ -87,9 +87,9 @@ func New(configFileName *string) *App {
   if err != nil { log.Fatalf("Error reading Nuts config: [kafka].partition %#v\n", err) }
   
   // ServePath
-  servepath, err := config.GetString("default", "servepath")
+  returnedApp.ServePath, err = config.GetString("default", "servepath")
   if err != nil { log.Fatalf("Error reading Nuts config: [default].servepath %#v\n", err) }
-  if len(servepath) == 0 {
+  if len(returnedApp.ServePath) == 0 {
     returnedApp.ServePath, err = osext.ExecutableFolder()
     if err != nil { log.Fatalf("Error setting Nuts Config: osext.ExecutableFolder() %#v\n", err) }
   }

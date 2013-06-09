@@ -30,7 +30,21 @@ func TestRouterInit(t *testing.T) {
   // Test Combination Routes
   nuttyApp.Routes.Map("/teams.json",  TesterController, []string{"GET", "POST", "PUT", "DELETE"}, nuttyApp)
 }
+
+
+func TestServePath(t *testing.T) {
+  configFilename := "nutty.properties.example"
+	nuttyApp := nutty.New(&configFilename)
   
+  if nuttyApp.Logfile != "stdout" {
+    t.Errorf("Expected nuttyApp.Logfile(=`%s`) to be `stdout`", nuttyApp.Logfile)
+  }
+  if nuttyApp.ServePath != "." {
+    t.Errorf("Expected nuttyApp.ServePath(=`%s`) to be `.`", nuttyApp.ServePath)
+  }
+}
+
+
 func TestNotifier(t *testing.T) {
   configFilename := "nutty.properties.example"
 	nuttyApp := nutty.New(&configFilename)
