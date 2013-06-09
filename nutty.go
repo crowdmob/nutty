@@ -8,6 +8,7 @@ import (
   "fmt"
   configfile "github.com/crowdmob/goconfig"
   "github.com/crowdmob/goamz/aws"
+  "bitbucket.org/kardianos/osext"
 )
 
 type App struct {
@@ -15,6 +16,7 @@ type App struct {
   Name            string
   Env             string
   Port            int64
+  ExePath         string
   Logfile         string
   SnsArn          string
   PaypalUsername  string
@@ -75,8 +77,6 @@ func New(configFileName *string) *App {
   returnedApp.SnsArn, err = config.GetString("sns", "arn")
   if err != nil { log.Fatalf("Error reading Nuts config: [sns].arn %#v\n", err) }
   
-  // returnedApp.DynamoDbServer = dynamodb.Server{returnedApp.AwsAuth, returnedApp.AwsRegion}
-  
   // Kafka
   returnedApp.KafkaHost, err = config.GetString("kafka", "host")
   if err != nil { log.Fatalf("Error reading Nuts config: [kafka].host %#v\n", err) }
@@ -85,6 +85,10 @@ func New(configFileName *string) *App {
   returnedApp.KafkaHostname = fmt.Sprintf("%s:%d", returnedApp.KafkaHost, returnedApp.KafkaPort)
   returnedApp.KafkaPartition, err = config.GetInt64("kafka", "partition")
   if err != nil { log.Fatalf("Error reading Nuts config: [kafka].partition %#v\n", err) }
+  
+  // ExePath
+  returnedApp.ExePath, err = osext.ExecutableFolder()
+  if err != nil { log.Fatalf("Error setting Nuts Config: osext.ExecutableFolder() %#v\n", err) }
   
   returnedApp.Routes.handlers = make(map[string](map[string]interface{}))
   returnedApp.Routes.initializations = make(map[string]bool)
