@@ -12,14 +12,14 @@ type PersistentModelWithDictionaryKey interface {
   SetUpdatedAt(time.Time)
 }
 
-func (nuttyApp *App) AddToDynamoDB(m PersistentModelWithDictionaryKey) error {
+func (nuttyApp *App) AddToDynamoDB(m PersistentModelWithDictionaryKey, optionalAppName string) error {
   m.SetCreatedAt(time.Now())
   
   marshalledAttrs, err := dynamodb.MarshalAttributes(m)
   if err != nil { return err }
   
   _, hashKeyValue := m.DictionaryKey()
-  _, err = nuttyApp.DynamoDBTableForModel(m).PutItem(
+  _, err = nuttyApp.DynamoDBTableForModel(m, optionalAppName).PutItem(
     hashKeyValue, 
     "", 
     marshalledAttrs,
@@ -27,16 +27,16 @@ func (nuttyApp *App) AddToDynamoDB(m PersistentModelWithDictionaryKey) error {
   return err
 }
 
-func (nuttyApp *App) GetFromDynamoDB(key string, dest PersistentModelWithDictionaryKey) error {
-  attrs, err := nuttyApp.DynamoDBTableForModel(dest).GetItem(key, "")
+func (nuttyApp *App) GetFromDynamoDB(key string, dest PersistentModelWithDictionaryKey, optionalAppName string) error {
+  attrs, err := nuttyApp.DynamoDBTableForModel(dest, optionalAppName).GetItem(key, "")
   if err != nil { return err }
   
   err = dynamodb.UnmarshalAttributes(&attrs, dest)
   return err
 }
 
-func (nuttyApp *App) ExistsInDynamoDB(key string, m PersistentModelWithDictionaryKey) (bool, error) {
-  attrs, err := nuttyApp.DynamoDBTableForModel(m).GetItem(key, "")
+func (nuttyApp *App) ExistsInDynamoDB(key string, m PersistentModelWithDictionaryKey, optionalAppName string) (bool, error) {
+  attrs, err := nuttyApp.DynamoDBTableForModel(m, optionalAppName).GetItem(key, "")
   if err != nil { return false, nil } // treat an erroneous response as empty
   
   hashKeyName, _ := m.DictionaryKey()
@@ -46,7 +46,7 @@ func (nuttyApp *App) ExistsInDynamoDB(key string, m PersistentModelWithDictionar
   return false, nil
 }
 
-func (nuttyApp *App) UpdateInDynamoDB(m PersistentModelWithDictionaryKey) error {
+func (nuttyApp *App) UpdateInDynamoDB(m PersistentModelWithDictionaryKey, optionalAppName string) error {
   m.SetUpdatedAt(time.Now())
   
   marshalledAttrs, err := dynamodb.MarshalAttributes(m)
@@ -54,7 +54,7 @@ func (nuttyApp *App) UpdateInDynamoDB(m PersistentModelWithDictionaryKey) error 
   
   // TODO once dynamodb has a proper UpdateItem we should use that instead of PutItem
   _, hashKeyValue := m.DictionaryKey()
-  _, err = nuttyApp.DynamoDBTableForModel(m).PutItem(
+  _, err = nuttyApp.DynamoDBTableForModel(m, optionalAppName).PutItem(
     hashKeyValue, 
     "", 
     marshalledAttrs,
@@ -66,10 +66,10 @@ func (nuttyApp *App) RemoveFromDynamoDB(m PersistentModelWithDictionaryKey) erro
   panic("RemoveFromDynamoDB Not Yet Implemented")
 }
 
-func (nuttyApp *App) DynamoDBTableForModel(m PersistentModelWithDictionaryKey) *dynamodb.Table {
+func (nuttyApp *App) DynamoDBTableForModel(m PersistentModelWithDictionaryKey, optionalAppName string) *dynamodb.Table {
   hashKeyName, _ := m.DictionaryKey()
   return (&dynamodb.Server{nuttyApp.AwsAuth, nuttyApp.AwsRegion}).NewTable(
-    nuttyApp.DynamoDBTableNameForModel(m), 
+    nuttyApp.DynamoDBTableNameForModel(m, optionalAppName),
     dynamodb.PrimaryKey{
       dynamodb.NewStringAttribute(hashKeyName, ""), 
       nil,
@@ -77,7 +77,9 @@ func (nuttyApp *App) DynamoDBTableForModel(m PersistentModelWithDictionaryKey) *
   )
 }
 
-func (nuttyApp *App) DynamoDBTableNameForModel(m PersistentModelWithDictionaryKey) string {
-  return m.ModelName() + "s-" + nuttyApp.Name + "-" + nuttyApp.Env
+func (nuttyApp *App) DynamoDBTableNameForModel(m PersistentModelWithDictionaryKey, optionalAppName string) string {
+  if optionalAppName == "" {
+    optionalAppName = nuttyApp.Name
+  }
+  return m.ModelName() + "s-" + optionalAppName + "-" + nuttyApp.Env
 }
-
