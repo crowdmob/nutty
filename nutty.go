@@ -71,7 +71,7 @@ func New(configFileName *string) *App {
   if err != nil { log.Fatalf("Error reading Nuts config: [aws].accesskey %#v\n", err) }
   awsSecret, err := config.GetString("aws", "secretkey")
   if err != nil { log.Fatalf("Error reading Nuts config: [aws].secretkey %#v\n", err) }
-  returnedApp.AwsAuth = aws.Auth{awsKey, awsSecret}
+  returnedApp.AwsAuth = aws.Auth{AccessKey: awsKey, SecretKey: awsSecret}
   
   // SNS
   returnedApp.SnsArn, err = config.GetString("sns", "arn")

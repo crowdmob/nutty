@@ -28,7 +28,7 @@ func (nuttyApp *App) AddToDynamoDB(m PersistentModelWithDictionaryKey, optionalA
 }
 
 func (nuttyApp *App) GetFromDynamoDB(key string, dest PersistentModelWithDictionaryKey, optionalAppName string) error {
-  attrs, err := nuttyApp.DynamoDBTableForModel(dest, optionalAppName).GetItem(key, "")
+  attrs, err := nuttyApp.DynamoDBTableForModel(dest, optionalAppName).GetItem(&dynamodb.Key{HashKey: key})
   if err != nil { return err }
   
   err = dynamodb.UnmarshalAttributes(&attrs, dest)
@@ -36,7 +36,7 @@ func (nuttyApp *App) GetFromDynamoDB(key string, dest PersistentModelWithDiction
 }
 
 func (nuttyApp *App) ExistsInDynamoDB(key string, m PersistentModelWithDictionaryKey, optionalAppName string) (bool, error) {
-  attrs, err := nuttyApp.DynamoDBTableForModel(m, optionalAppName).GetItem(key, "")
+  attrs, err := nuttyApp.DynamoDBTableForModel(m, optionalAppName).GetItem(&dynamodb.Key{HashKey: key})
   if err != nil { return false, nil } // treat an erroneous response as empty
   
   hashKeyName, _ := m.DictionaryKey()
