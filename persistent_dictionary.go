@@ -84,6 +84,56 @@ func (nuttyApp *App) IncrementIntsInDynamoDB(m PersistentModelWithDictionaryKey,
   return err
 }
 
+func (nuttyApp *App) IncrementNumericsInDynamoDB(m PersistentModelWithDictionaryKey, intAttributeIncrements map[string]int64, floatAttributeIncrements map[string]float64, optionalAppName string) error {
+  attrs := make([]dynamodb.Attribute, len(intAttributeIncrements)+len(floatAttributeIncrements))
+  
+	i := 0
+	for key, val := range floatAttributeIncrements {
+		attrs[i] = dynamodb.Attribute{
+			Type:  dynamodb.TYPE_NUMBER,
+			Name:  key,
+			Value: strconv.FormatFloat(val, 'f', -1, 64),
+		}
+		i++
+	}
+
+	for key, val := range intAttributeIncrements {
+		attrs[i] = dynamodb.Attribute{
+			Type:  dynamodb.TYPE_NUMBER,
+			Name:  key,
+			Value: strconv.FormatInt(val, 10),
+		}
+		i++
+	}
+  _, hashKeyValue := m.DictionaryKey()
+  _, err := nuttyApp.DynamoDBTableForModel(m, optionalAppName).AddItem(
+    &dynamodb.Key{HashKey: hashKeyValue},
+    attrs,
+  )
+  return err
+}
+
+func (nuttyApp *App) IncrementFloatsInDynamoDB(m PersistentModelWithDictionaryKey, attributeIncrements map[string]float64, optionalAppName string) error {
+  attrs := make([]dynamodb.Attribute, len(attributeIncrements))
+  
+	i := 0
+	for key, val := range attributeIncrements {
+		attrs[i] = dynamodb.Attribute{
+			Type:  dynamodb.TYPE_NUMBER,
+			Name:  key,
+			Value: strconv.FormatFloat(val, 'f', -1, 64),
+		}
+		i++
+	}
+	
+  _, hashKeyValue := m.DictionaryKey()
+  _, err := nuttyApp.DynamoDBTableForModel(m, optionalAppName).AddItem(
+    &dynamodb.Key{HashKey: hashKeyValue},
+    attrs,
+  )
+  return err
+}
+
 func (nuttyApp *App) RemoveFromDynamoDB(m PersistentModelWithDictionaryKey) error {
   panic("RemoveFromDynamoDB Not Yet Implemented")
 }
