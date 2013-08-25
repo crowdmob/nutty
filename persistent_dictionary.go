@@ -2,6 +2,7 @@ package nutty
 
 import (
   "time"
+	"strconv"
   "github.com/crowdmob/goamz/dynamodb"
 )
 
@@ -58,6 +59,27 @@ func (nuttyApp *App) UpdateInDynamoDB(m PersistentModelWithDictionaryKey, option
     hashKeyValue, 
     "", 
     marshalledAttrs,
+  )
+  return err
+}
+
+func (nuttyApp *App) IncrementIntsInDynamoDB(m PersistentModelWithDictionaryKey, attributeIncrements map[string]int64, optionalAppName string) error {
+  attrs := make([]dynamodb.Attribute, len(attributeIncrements))
+  
+	i := 0
+	for key, val := range attributeIncrements {
+		attrs[i] = dynamodb.Attribute{
+			Type:  dynamodb.TYPE_NUMBER,
+			Name:  key,
+			Value: strconv.FormatInt(val, 10),
+		}
+		i++
+	}
+	
+  _, hashKeyValue := m.DictionaryKey()
+  _, err := nuttyApp.DynamoDBTableForModel(m, optionalAppName).AddItem(
+    &dynamodb.Key{HashKey: hashKeyValue},
+    attrs,
   )
   return err
 }
