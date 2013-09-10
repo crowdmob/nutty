@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/crowdmob/goamz/aws"
 	configfile "github.com/crowdmob/goconfig"
+	"runtime"
 	"log"
 	"os"
 )
@@ -36,6 +37,10 @@ type App struct {
 func New(configFileName *string) *App {
 	returnedApp := &App{}
 	returnedApp.configFileName = *configFileName
+
+	log.Printf("Num procs is: %d", runtime.GOMAXPROCS(0))
+	runtime.GOMAXPROCS(runtime.NumCPU())
+	log.Printf("Num procs is now: %d", runtime.GOMAXPROCS(0))
 
 	config, err := configfile.ReadConfigFile(returnedApp.configFileName)
 	if err != nil {
