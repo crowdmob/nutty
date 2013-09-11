@@ -71,8 +71,7 @@ func (nuttyApp *App) UpdateInDynamoDB(m PersistentModelWithDictionaryKey, option
 	return err
 }
 
-
-func (nuttyApp *App) AppendToStringSetsInDynamoDB(m PersistentModelWithDictionaryKey, attributeAppends map[string]string, optionalAppName string) error {
+func stringSetsToDynamoAttrs(attributeAppends map[string]string) []dynamodb.Attribute {
 	attrs := make([]dynamodb.Attribute, len(attributeAppends))
 
 	i := 0
@@ -84,15 +83,26 @@ func (nuttyApp *App) AppendToStringSetsInDynamoDB(m PersistentModelWithDictionar
 		}
 		i++
 	}
+	return attrs
+}
 
+func (nuttyApp *App) AppendToStringSetsInDynamoDB(m PersistentModelWithDictionaryKey, attributeAppends map[string]string, optionalAppName string) error {
 	_, hashKeyValue := m.DictionaryKey()
 	_, err := nuttyApp.DynamoDBTableForModel(m, optionalAppName).AddItem(
 		&dynamodb.Key{HashKey: hashKeyValue},
-		attrs,
+		stringSetsToDynamoAttrs(attributeAppends),
 	)
 	return err
 }
 
+func (nuttyApp *App) SubtractFromStringSetsInDynamoDB(m PersistentModelWithDictionaryKey, attributeAppends map[string]string, optionalAppName string) error {
+	_, hashKeyValue := m.DictionaryKey()
+	_, err := nuttyApp.DynamoDBTableForModel(m, optionalAppName).DeleteItem(
+		&dynamodb.Key{HashKey: hashKeyValue},
+		stringSetsToDynamoAttrs(attributeAppends),
+	)
+	return err
+}
 
 func intsToDynamoAttrs(attributeIncrements map[string]int64) []dynamodb.Attribute {
 	attrs := make([]dynamodb.Attribute, len(attributeIncrements))
