@@ -93,9 +93,9 @@ func (nuttyApp *App) AppendToStringSetsInDynamoDB(m PersistentModelWithDictionar
 	return err
 }
 
-func (nuttyApp *App) IncrementIntsInDynamoDB(m PersistentModelWithDictionaryKey, attributeIncrements map[string]int64, optionalAppName string) error {
-	attrs := make([]dynamodb.Attribute, len(attributeIncrements))
 
+func intsToDynamoAttrs(attributeIncrements map[string]int64) []dynamodb.Attribute {
+	attrs := make([]dynamodb.Attribute, len(attributeIncrements))
 	i := 0
 	for key, val := range attributeIncrements {
 		attrs[i] = dynamodb.Attribute{
@@ -105,11 +105,22 @@ func (nuttyApp *App) IncrementIntsInDynamoDB(m PersistentModelWithDictionaryKey,
 		}
 		i++
 	}
+	return attrs
+}
+func (nuttyApp *App) SetIntsInDynamoDB(m PersistentModelWithDictionaryKey, attributeIncrements map[string]int64, optionalAppName string) error {
+	_, hashKeyValue := m.DictionaryKey()
+	_, err := nuttyApp.DynamoDBTableForModel(m, optionalAppName).UpdateItem(
+		&dynamodb.Key{HashKey: hashKeyValue},
+		intsToDynamoAttrs(attributeIncrements),
+	)
+	return err
+}
 
+func (nuttyApp *App) IncrementIntsInDynamoDB(m PersistentModelWithDictionaryKey, attributeIncrements map[string]int64, optionalAppName string) error {
 	_, hashKeyValue := m.DictionaryKey()
 	_, err := nuttyApp.DynamoDBTableForModel(m, optionalAppName).AddItem(
 		&dynamodb.Key{HashKey: hashKeyValue},
-		attrs,
+		intsToDynamoAttrs(attributeIncrements),
 	)
 	return err
 }
