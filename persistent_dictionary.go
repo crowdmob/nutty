@@ -79,7 +79,7 @@ func stringSetsToDynamoAttrs(attributeAppends map[string]string) []dynamodb.Attr
 		attrs[i] = dynamodb.Attribute{
 			Type:  dynamodb.TYPE_STRING_SET,
 			Name:  key,
-			Value: val,
+			SetValues: []string{val},
 		}
 		i++
 	}
