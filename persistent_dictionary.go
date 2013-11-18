@@ -88,7 +88,7 @@ func stringSetsToDynamoAttrs(attributeAppends map[string]string) []dynamodb.Attr
 
 func (nuttyApp *App) AppendToStringSetsInDynamoDB(m PersistentModelWithDictionaryKey, attributeAppends map[string]string, optionalAppName string) error {
 	_, hashKeyValue := m.DictionaryKey()
-	_, err := nuttyApp.DynamoDBTableForModel(m, optionalAppName).AddItem(
+	_, err := nuttyApp.DynamoDBTableForModel(m, optionalAppName).AddAttributes(
 		&dynamodb.Key{HashKey: hashKeyValue},
 		stringSetsToDynamoAttrs(attributeAppends),
 	)
@@ -97,7 +97,7 @@ func (nuttyApp *App) AppendToStringSetsInDynamoDB(m PersistentModelWithDictionar
 
 func (nuttyApp *App) SubtractFromStringSetsInDynamoDB(m PersistentModelWithDictionaryKey, attributeAppends map[string]string, optionalAppName string) error {
 	_, hashKeyValue := m.DictionaryKey()
-	_, err := nuttyApp.DynamoDBTableForModel(m, optionalAppName).DeleteItem(
+	_, err := nuttyApp.DynamoDBTableForModel(m, optionalAppName).DeleteAttributes(
 		&dynamodb.Key{HashKey: hashKeyValue},
 		stringSetsToDynamoAttrs(attributeAppends),
 	)
@@ -119,7 +119,7 @@ func intsToDynamoAttrs(attributeIncrements map[string]int64) []dynamodb.Attribut
 }
 func (nuttyApp *App) SetIntsInDynamoDB(m PersistentModelWithDictionaryKey, attributeIncrements map[string]int64, optionalAppName string) error {
 	_, hashKeyValue := m.DictionaryKey()
-	_, err := nuttyApp.DynamoDBTableForModel(m, optionalAppName).UpdateItem(
+	_, err := nuttyApp.DynamoDBTableForModel(m, optionalAppName).UpdateAttributes(
 		&dynamodb.Key{HashKey: hashKeyValue},
 		intsToDynamoAttrs(attributeIncrements),
 	)
@@ -128,7 +128,7 @@ func (nuttyApp *App) SetIntsInDynamoDB(m PersistentModelWithDictionaryKey, attri
 
 func (nuttyApp *App) IncrementIntsInDynamoDB(m PersistentModelWithDictionaryKey, attributeIncrements map[string]int64, optionalAppName string) error {
 	_, hashKeyValue := m.DictionaryKey()
-	_, err := nuttyApp.DynamoDBTableForModel(m, optionalAppName).AddItem(
+	_, err := nuttyApp.DynamoDBTableForModel(m, optionalAppName).AddAttributes(
 		&dynamodb.Key{HashKey: hashKeyValue},
 		intsToDynamoAttrs(attributeIncrements),
 	)
@@ -157,7 +157,7 @@ func (nuttyApp *App) IncrementNumericsInDynamoDB(m PersistentModelWithDictionary
 		i++
 	}
 	_, hashKeyValue := m.DictionaryKey()
-	_, err := nuttyApp.DynamoDBTableForModel(m, optionalAppName).AddItem(
+	_, err := nuttyApp.DynamoDBTableForModel(m, optionalAppName).AddAttributes(
 		&dynamodb.Key{HashKey: hashKeyValue},
 		attrs,
 	)
@@ -178,7 +178,7 @@ func (nuttyApp *App) IncrementFloatsInDynamoDB(m PersistentModelWithDictionaryKe
 	}
 
 	_, hashKeyValue := m.DictionaryKey()
-	_, err := nuttyApp.DynamoDBTableForModel(m, optionalAppName).AddItem(
+	_, err := nuttyApp.DynamoDBTableForModel(m, optionalAppName).AddAttributes(
 		&dynamodb.Key{HashKey: hashKeyValue},
 		attrs,
 	)
